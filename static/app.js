@@ -38,8 +38,8 @@ async function loadDashboard() {
   const stats = document.getElementById('dash-stats');
   stats.innerHTML = `
     <div class="stat-card primary"><div class="stat-val">${d.active_rentals}</div><div class="stat-label">Location(s) en cours</div></div>
-    <div class="stat-card success"><div class="stat-val">${fmt€(d.revenue_month)}</div><div class="stat-label">Revenus ce mois</div></div>
-    <div class="stat-card info"><div class="stat-val">${fmt€(d.revenue_total)}</div><div class="stat-label">Revenus total</div></div>
+    <div class="stat-card success"><div class="stat-val">${fmtEuro(d.revenue_month)}</div><div class="stat-label">Revenus ce mois</div></div>
+    <div class="stat-card info"><div class="stat-val">${fmtEuro(d.revenue_total)}</div><div class="stat-label">Revenus total</div></div>
     <div class="stat-card"><div class="stat-val">${d.tools_count}</div><div class="stat-label">Outils</div></div>
     <div class="stat-card"><div class="stat-val">${d.clients_count}</div><div class="stat-label">Clients</div></div>
     <div class="stat-card warning"><div class="stat-val">${d.pending_deposit_return}</div><div class="stat-label">Cautions à rendre</div></div>
@@ -75,9 +75,9 @@ function renderTools() {
         <div class="tool-name">${esc(t.name)}</div>
         <div class="tool-cat">${esc(t.category||'')}</div>
         <div class="tool-prices">
-          <span>${fmt€(t.daily_price)}/j</span>
-          ${t.weekend_price ? `<span>${fmt€(t.weekend_price)}/wk</span>` : ''}
-          ${t.deposit ? `<span>🔒 ${fmt€(t.deposit)}</span>` : ''}
+          <span>${fmtEuro(t.daily_price)}/j</span>
+          ${t.weekend_price ? `<span>${fmtEuro(t.weekend_price)}/wk</span>` : ''}
+          ${t.deposit ? `<span>🔒 ${fmtEuro(t.deposit)}</span>` : ''}
         </div>
       </div>
     </div>`;
@@ -157,9 +157,9 @@ async function openToolDetail(id) {
     <h2>${esc(t.name)} ${t.category ? `<span style="font-size:.8rem;color:var(--muted)">${esc(t.category)}</span>` : ''}</h2>
     <div class="tool-detail-gallery">${gallery}</div>
     <div class="tool-detail-info">
-      <div class="detail-field"><label>Prix / jour</label><div class="val price">${fmt€(t.daily_price)}</div></div>
-      <div class="detail-field"><label>Prix week-end</label><div class="val price">${t.weekend_price ? fmt€(t.weekend_price) : '—'}</div></div>
-      <div class="detail-field"><label>Caution</label><div class="val">${t.deposit ? fmt€(t.deposit) : '—'}</div></div>
+      <div class="detail-field"><label>Prix / jour</label><div class="val price">${fmtEuro(t.daily_price)}</div></div>
+      <div class="detail-field"><label>Prix week-end</label><div class="val price">${t.weekend_price ? fmtEuro(t.weekend_price) : '—'}</div></div>
+      <div class="detail-field"><label>Caution</label><div class="val">${t.deposit ? fmtEuro(t.deposit) : '—'}</div></div>
       <div class="detail-field"><label>Description</label><div class="val">${esc(t.description)||'—'}</div></div>
       ${t.notes ? `<div class="detail-field"><label>Notes</label><div class="val">${esc(t.notes)}</div></div>` : ''}
     </div>
@@ -167,7 +167,7 @@ async function openToolDetail(id) {
     ${rents.slice(0,5).map(r => `<div class="rental-row" onclick="closeModal('modal-tool-detail');openRentalDetail(${r.id})">
       <div class="rental-info">
         <div class="rental-title">👤 ${esc(r.client?.name||'')}</div>
-        <div class="rental-meta"><span>${fmtDate(r.start_date)} → ${fmtDate(r.end_date)}</span><span>${fmt€(r.price)}</span><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></div>
+        <div class="rental-meta"><span>${fmtDate(r.start_date)} → ${fmtDate(r.end_date)}</span><span>${fmtEuro(r.price)}</span><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></div>
       </div>
     </div>`).join('')}
     ${rents.length > 5 ? `<div style="color:var(--muted);font-size:.8rem">… et ${rents.length-5} autres</div>` : ''}
@@ -283,7 +283,7 @@ async function openClientDetail(id) {
     ${c.rentals.slice(0,5).map(r => `<div class="rental-row" onclick="closeModal('modal-client-detail');openRentalDetail(${r.id})">
       <div class="rental-info">
         <div class="rental-title">🔨 ${esc(r.tool_name)}</div>
-        <div class="rental-meta"><span>${fmtDate(r.start_date)} → ${fmtDate(r.end_date)}</span><span>${fmt€(r.price)}</span><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></div>
+        <div class="rental-meta"><span>${fmtDate(r.start_date)} → ${fmtDate(r.end_date)}</span><span>${fmtEuro(r.price)}</span><span class="badge badge-${r.status}">${statusLabel(r.status)}</span></div>
       </div>
     </div>`).join('')}
   `;
@@ -336,7 +336,7 @@ function renderRentals() {
         <div class="rental-title">🔨 ${esc(r.tool?.name||'')} — 👤 ${esc(r.client?.name||'')}</div>
         <div class="rental-meta">
           <span>📅 ${fmtDate(r.start_date)} → ${fmtDate(r.end_date)}</span>
-          <span>💶 ${fmt€(r.price)}</span>
+          <span>💶 ${fmtEuro(r.price)}</span>
           ${r.platform ? `<span>🔗 ${esc(r.platform.name)}</span>` : ''}
           <span class="badge badge-${r.status}">${statusLabel(r.status)}</span>
           ${r.deposit_collected && !r.deposit_returned ? '<span style="color:var(--warning)">🔒 Caution à rendre</span>' : ''}
@@ -378,7 +378,7 @@ function calcRentalPrice() {
   const isWeekend = days <= 3 && [6,0].includes(new Date(start).getDay());
   const price = isWeekend && t.weekend_price ? t.weekend_price : t.daily_price * days;
   document.getElementById('rental-price').value = price.toFixed(2);
-  document.getElementById('rental-price-hint').textContent = `${days} jour(s) × ${fmt€(t.daily_price)} = ${fmt€(price)} (estimé)`;
+  document.getElementById('rental-price-hint').textContent = `${days} jour(s) × ${fmtEuro(t.daily_price)} = ${fmtEuro(price)} (estimé)`;
 }
 
 async function saveRental() {
@@ -502,7 +502,7 @@ async function deletePlatform(id) {
 }
 
 // ─── Utils ──────────────────────────────────────────────────────────────────
-function fmt€(v) { return Number(v).toLocaleString('fr-FR', {style:'currency', currency:'EUR'}); }
+function fmtEuro(v) { return Number(v).toLocaleString('fr-FR', {style:'currency', currency:'EUR'}); }
 function fmtDate(d) { if(!d) return '—'; return new Date(d+'T00:00:00').toLocaleDateString('fr-FR'); }
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function statusLabel(s) {
