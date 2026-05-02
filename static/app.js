@@ -149,8 +149,9 @@ async function saveTool() {
 async function openToolDetail(id) {
   const t = await api.get(`/api/tools/${id}`);
   const rents = await api.get(`/api/rentals?tool_id=${id}`);
-  const gallery = t.images.length ? t.images.map(img =>
-    `<img src="/uploads/tools/${img.filename}" class="${img.is_main?'main-img':''}" title="${img.is_main?'Principale':''}" onclick="setMainImage(${id},${img.id})"/>`
+  const imgUrls = t.images.map(img => `/uploads/tools/${img.filename}`);
+  const gallery = t.images.length ? t.images.map((img, idx) =>
+    `<img src="/uploads/tools/${img.filename}" class="${img.is_main?'main-img':''}" title="Cliquer pour agrandir" onclick="openLightbox(${JSON.stringify(imgUrls).replace(/"/g,'&quot;')}, ${idx})"/>`
   ).join('') : '<span style="color:var(--muted)">Aucune photo</span>';
 
   document.getElementById('tool-detail-content').innerHTML = `
@@ -507,6 +508,45 @@ function fmtDate(d) { if(!d) return '—'; return new Date(d+'T00:00:00').toLoca
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function statusLabel(s) {
   return {confirmed:'Confirmée', ongoing:'En cours', returned:'Retournée', cancelled:'Annulée'}[s] || s;
+}
+
+// ─── Lightbox ───────────────────────────────────────────────────────────────
+let _lbImages = [], _lbIdx = 0;
+
+function openLightbox(images, idx) {
+  _lbImages = images;
+  _lbIdx = idx;
+  _lbRender();
+  document.getElementById('lightbox').classList.remove('hidden');
+  document.addEventListener('keydown', _lbKey);
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.add('hidden');
+  document.removeEventListener('keydown', _lbKey);
+}
+
+function lightboxNav(dir) {
+  _lbIdx = (_lbIdx + dir + _lbImages.length) % _lbImages.length;
+  _lbRender();
+}
+
+function _lbRender() {
+  const url = _lbImages[_lbIdx];
+  const img = document.getElementById('lightbox-img');
+  img.src = url;
+  document.getElementById('lightbox-counter').textContent = `${_lbIdx + 1} / ${_lbImages.length}`;
+  const dl = document.getElementById('lightbox-download');
+  dl.href = url;
+  dl.download = url.split('/').pop();
+  document.querySelector('.lightbox-prev').style.display = _lbImages.length > 1 ? '' : 'none';
+  document.querySelector('.lightbox-next').style.display = _lbImages.length > 1 ? '' : 'none';
+}
+
+function _lbKey(e) {
+  if (e.key === 'ArrowLeft') lightboxNav(-1);
+  else if (e.key === 'ArrowRight') lightboxNav(1);
+  else if (e.key === 'Escape') closeLightbox();
 }
 
 // ─── Init ───────────────────────────────────────────────────────────────────
