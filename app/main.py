@@ -6,7 +6,7 @@ from datetime import datetime, date
 import os
 
 from .database import init_db, get_db
-from .routers import tools, clients, rentals, platforms
+from .routers import tools, clients, rentals, platforms, listings
 
 app = FastAPI(title="LocOutil")
 
@@ -21,6 +21,7 @@ app.include_router(tools.router)
 app.include_router(clients.router)
 app.include_router(rentals.router)
 app.include_router(platforms.router)
+app.include_router(listings.router)
 
 @app.on_event("startup")
 def startup():

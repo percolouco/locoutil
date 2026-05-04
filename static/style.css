@@ -181,6 +181,21 @@ input[type="file"] { padding: 6px; font-size: 0.8rem; }
   .logo { display: none; }
 }
 
+/* Listings matrix */
+.listings-matrix { overflow-x: auto; }
+.listings-table { border-collapse: collapse; width: 100%; min-width: 500px; }
+.listings-table th { padding: 10px 14px; text-align: left; font-size: .8rem; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.listings-table th.platform-col { text-align: center; min-width: 110px; }
+.listings-table td { padding: 8px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.listings-table tr:hover td { background: var(--surface2); }
+.listings-table .tool-name { font-weight: 600; font-size: .9rem; }
+.listing-cell { display: flex; align-items: center; justify-content: center; }
+.listing-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); background: transparent; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.listing-btn:hover { border-color: var(--primary); transform: scale(1.1); }
+.listing-btn.active { background: rgba(34,197,94,.15); border-color: var(--success); }
+.listing-btn.inactive { background: rgba(239,68,68,.1); border-color: var(--danger); }
+.listing-btn.empty { border-style: dashed; }
+
 /* Lightbox */
 .lightbox { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; }
 .lightbox.hidden { display: none; }
