@@ -1,14 +1,15 @@
 # LocOutil — Gestion de location d'outils
 
-Application web de gestion de location d'outils. Permet de gérer le catalogue d'outils, les clients, les réservations et d'avoir une vue calendrier de la disponibilité.
+Application web de gestion de location d'outils. Permet de gérer le catalogue d'outils, les clients, les réservations, les annonces sur les plateformes et d'avoir une vue calendrier de la disponibilité.
 
 ## Fonctionnalités
 
 ### Outils
-- Fiche outil : nom, catégorie, description, photos multiples
+- Fiche outil : nom, catégorie, description, photos multiples (upload)
 - Tarifs : prix à la journée, prix week-end, caution
 - Notes internes
 - Historique des locations par outil
+- **Lightbox** : clic sur une photo → plein écran avec navigation (← →) et bouton téléchargement
 
 ### Clients
 - Fiche client : nom, téléphone, email, adresse, notes
@@ -23,12 +24,22 @@ Application web de gestion de location d'outils. Permet de gérer le catalogue d
 - Notes de retour (état de l'outil à la restitution)
 
 ### Calendrier
-- Vue mensuelle avec toutes les locations actives
+- Vue mensuelle grille 7 colonnes
+- Chaque outil a une couleur fixe pour identification rapide
+- Légende des outils du mois
+- Week-ends et aujourd'hui visuellement différenciés
 - Clic sur un événement pour voir le détail
+
+### Annonces
+- Vue matricielle outils × plateformes
+- Statut par cellule : active (✓ vert) / inactive (✗ rouge) / absente (+ pointillé)
+- Fiche annonce par outil/plateforme : titre, texte, prix, lien, notes
+- Bouton **Copier** pour copier l'annonce prête à coller sur la plateforme
+- Utile pour republier rapidement une annonce expirée
 
 ### Plateformes
 - Liste éditable (Leboncoin, Direct, etc.)
-- Associée à chaque location pour le suivi des sources
+- Utilisée dans les locations et les annonces
 
 ### Dashboard
 - Locations en cours, revenus du mois, revenus total
@@ -58,10 +69,11 @@ locoutil/
 │   ├── main.py              # App FastAPI + dashboard
 │   ├── database.py          # SQLite + schéma
 │   └── routers/
-│       ├── tools.py         # CRUD outils + images
+│       ├── tools.py         # CRUD outils + images (upload)
 │       ├── clients.py       # CRUD clients + documents
 │       ├── rentals.py       # CRUD locations + calendrier
-│       └── platforms.py     # CRUD plateformes
+│       ├── platforms.py     # CRUD plateformes
+│       └── listings.py      # CRUD annonces (matrice outil × plateforme)
 ├── static/
 │   ├── style.css
 │   └── app.js
@@ -71,4 +83,4 @@ locoutil/
 └── requirements.txt
 ```
 
-Les données sont persistées dans `/opt/container/locoutil/data/` (SQLite) et `/opt/container/locoutil/uploads/` (fichiers).
+Les données sont persistées dans `/opt/container/locoutil/data/` (SQLite) et `/opt/container/locoutil/uploads/` (images outils et documents clients).
