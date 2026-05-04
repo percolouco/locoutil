@@ -441,38 +441,68 @@ async function loadCalendar() {
 function calPrev() { calMonth--; if(calMonth<1){calMonth=12;calYear--;} loadCalendar(); }
 function calNext() { calMonth++; if(calMonth>12){calMonth=1;calYear++;} loadCalendar(); }
 
+// Palette de couleurs par outil (stable par ID)
+const CAL_COLORS = [
+  '#6366f1','#22c55e','#f59e0b','#38bdf8','#f472b6',
+  '#a78bfa','#34d399','#fb923c','#60a5fa','#e879f9','#4ade80'
+];
+function toolColor(toolId) { return CAL_COLORS[(toolId - 1) % CAL_COLORS.length]; }
+
 function renderCalendar(rentals) {
-  const title = document.getElementById('cal-title');
-  title.textContent = new Date(calYear, calMonth-1, 1).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+  document.getElementById('cal-title').textContent =
+    new Date(calYear, calMonth-1, 1).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
 
   const today = new Date().toISOString().slice(0,10);
   const firstDay = new Date(calYear, calMonth-1, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth, 0).getDate();
-  const startOffset = (firstDay + 6) % 7; // Monday start
+  const startOffset = (firstDay + 6) % 7;
 
-  let html = `<table class="cal-table"><thead><tr>`;
-  ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].forEach(d => html += `<th>${d}</th>`);
-  html += '</tr></thead><tbody><tr>';
+  // Légende des outils présents ce mois
+  const toolsInMonth = [...new Map(rentals.map(r => [r.tool_id, r])).values()];
+  const legend = toolsInMonth.map(r =>
+    `<span class="cal-legend-item"><span class="cal-legend-dot" style="background:${toolColor(r.tool_id)}"></span>${esc(r.tool_name)}</span>`
+  ).join('');
 
-  for (let i=0; i<startOffset; i++) html += '<td></td>';
-  let col = startOffset;
+  let html = `<div class="cal-legend">${legend}</div>
+<div class="cal-grid-wrap">
+  <div class="cal-grid">`;
 
-  for (let day=1; day<=daysInMonth; day++) {
+  ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].forEach((d, i) => {
+    html += `<div class="cal-header-cell${i>=5?' cal-weekend':''}">${d}</div>`;
+  });
+
+  for (let i = 0; i < startOffset; i++) html += `<div class="cal-cell cal-empty"></div>`;
+
+  for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const dayRentals = rentals.filter(r => r.start_date <= dateStr && r.end_date >= dateStr);
     const isToday = dateStr === today;
-    const numEl = isToday ? `<div class="cal-day-num today">${day}</div>` : `<div class="cal-day-num">${day}</div>`;
-    const events = dayRentals.map(r =>
-      `<div class="cal-event" onclick="openRentalDetail(${r.id})" title="${esc(r.tool_name)} — ${esc(r.client_name)} (${esc(r.platform_name||'Direct')})">
-        🔨 ${esc(r.tool_name)}
-      </div>`
-    ).join('');
-    html += `<td>${numEl}${events}</td>`;
-    col++;
-    if (col % 7 === 0 && day < daysInMonth) html += '</tr><tr>';
+    const dow = (startOffset + day - 1) % 7;
+    const isWeekend = dow >= 5;
+
+    const events = dayRentals.map(r => {
+      const color = toolColor(r.tool_id);
+      const isStart = r.start_date === dateStr;
+      const isEnd = r.end_date === dateStr;
+      const label = isStart ? `🔨 ${esc(r.tool_name)}` : esc(r.tool_name);
+      return `<div class="cal-event-block${isStart?' cal-event-start':''}${isEnd?' cal-event-end':''}"
+        style="background:${color}22;border-left:3px solid ${color};color:${color}"
+        onclick="openRentalDetail(${r.id})"
+        title="${esc(r.tool_name)} → ${esc(r.client_name)}">${label}</div>`;
+    }).join('');
+
+    html += `<div class="cal-cell${isToday?' cal-today':''}${isWeekend?' cal-weekend':''}">
+      <div class="cal-day-num${isToday?' today':''}">${day}</div>
+      ${events}
+    </div>`;
   }
-  while (col % 7 !== 0) { html += '<td></td>'; col++; }
-  html += '</tr></tbody></table>';
+
+  // Remplir la dernière ligne
+  const total = startOffset + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 0; i < remaining; i++) html += `<div class="cal-cell cal-empty"></div>`;
+
+  html += `</div></div>`;
   document.getElementById('calendar-wrap').innerHTML = html;
 }
 
