@@ -25,6 +25,7 @@ document.querySelectorAll('.nav-item').forEach(el => {
     if (el.dataset.section === 'clients') loadClients();
     if (el.dataset.section === 'rentals') loadRentals();
     if (el.dataset.section === 'calendar') loadCalendar();
+    if (el.dataset.section === 'listings') loadListings();
     if (el.dataset.section === 'settings') loadPlatforms();
   });
 });
@@ -508,6 +509,111 @@ function fmtDate(d) { if(!d) return '—'; return new Date(d+'T00:00:00').toLoca
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function statusLabel(s) {
   return {confirmed:'Confirmée', ongoing:'En cours', returned:'Retournée', cancelled:'Annulée'}[s] || s;
+}
+
+// ─── Listings ───────────────────────────────────────────────────────────────
+let _matrix = null;
+
+async function loadListings() {
+  _matrix = await api.get('/api/listings/matrix');
+  renderListingsMatrix();
+}
+
+function renderListingsMatrix() {
+  const { tools, platforms, listings } = _matrix;
+  if (!tools.length) { document.getElementById('listings-matrix').innerHTML = '<div class="empty-state">Aucun outil</div>'; return; }
+  if (!platforms.length) { document.getElementById('listings-matrix').innerHTML = '<div class="empty-state">Aucune plateforme configurée (allez dans ⚙️)</div>'; return; }
+
+  let html = `<div class="listings-matrix"><table class="listings-table"><thead><tr>
+    <th>Outil</th>`;
+  platforms.forEach(p => { html += `<th class="platform-col">${esc(p.name)}</th>`; });
+  html += `</tr></thead><tbody>`;
+
+  tools.forEach(t => {
+    html += `<tr><td><div class="tool-name">${esc(t.name)}</div><div style="font-size:.75rem;color:var(--muted)">${fmtEuro(t.daily_price)}/j</div></td>`;
+    platforms.forEach(p => {
+      const key = `${t.id},${p.id}`;
+      const l = listings[key];
+      let cls = 'empty', icon = '＋', title = 'Créer une annonce';
+      if (l) {
+        if (l.is_active) { cls = 'active'; icon = '✓'; title = 'Annonce active — cliquer pour modifier'; }
+        else { cls = 'inactive'; icon = '✗'; title = 'Annonce inactive — cliquer pour modifier'; }
+      }
+      html += `<td><div class="listing-cell"><button class="listing-btn ${cls}" title="${title}" onclick="openListingModal(${t.id},${p.id})">${icon}</button></div></td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  document.getElementById('listings-matrix').innerHTML = html;
+}
+
+async function openListingModal(toolId, platformId) {
+  const { tools, platforms, listings } = _matrix;
+  const tool = tools.find(t => t.id === toolId);
+  const platform = platforms.find(p => p.id === platformId);
+  const key = `${toolId},${platformId}`;
+  const l = listings[key] || null;
+
+  document.getElementById('listing-id').value = l?.id || '';
+  document.getElementById('listing-tool-id').value = toolId;
+  document.getElementById('listing-platform-id').value = platformId;
+  document.getElementById('modal-listing-title').textContent = `Annonce — ${tool?.name}`;
+  document.getElementById('listing-meta').textContent = `Plateforme : ${platform?.name}`;
+  document.getElementById('listing-title').value = l?.title || (tool ? `${tool.name} à louer — ${tool.daily_price}€/jour` : '');
+  document.getElementById('listing-desc').value = l?.description || '';
+  document.getElementById('listing-price').value = l?.price ?? tool?.daily_price ?? '';
+  document.getElementById('listing-url').value = l?.url || '';
+  document.getElementById('listing-notes').value = l?.notes || '';
+  document.getElementById('listing-active').checked = l ? !!l.is_active : true;
+
+  const delBtn = document.getElementById('btn-listing-delete');
+  const copyBtn = document.getElementById('btn-listing-copy');
+  if (l) {
+    delBtn.style.display = '';
+    delBtn.onclick = () => deleteListing(l.id);
+    copyBtn.style.display = '';
+  } else {
+    delBtn.style.display = 'none';
+    copyBtn.style.display = 'none';
+  }
+  document.getElementById('modal-listing').classList.remove('hidden');
+}
+
+async function saveListing() {
+  const data = {
+    tool_id: parseInt(document.getElementById('listing-tool-id').value),
+    platform_id: parseInt(document.getElementById('listing-platform-id').value),
+    is_active: document.getElementById('listing-active').checked,
+    title: document.getElementById('listing-title').value.trim(),
+    description: document.getElementById('listing-desc').value.trim(),
+    price: parseFloat(document.getElementById('listing-price').value) || null,
+    url: document.getElementById('listing-url').value.trim(),
+    notes: document.getElementById('listing-notes').value.trim()
+  };
+  await api.post('/api/listings', data);
+  closeModal('modal-listing');
+  _matrix = await api.get('/api/listings/matrix');
+  renderListingsMatrix();
+}
+
+async function deleteListing(id) {
+  if (!confirm('Supprimer cette annonce ?')) return;
+  await api.del(`/api/listings/${id}`);
+  closeModal('modal-listing');
+  _matrix = await api.get('/api/listings/matrix');
+  renderListingsMatrix();
+}
+
+function copyListingText() {
+  const title = document.getElementById('listing-title').value;
+  const desc = document.getElementById('listing-desc').value;
+  const price = document.getElementById('listing-price').value;
+  const text = [title, price ? `Prix : ${price}€/jour` : '', '', desc].filter(Boolean).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-listing-copy');
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => btn.textContent = '📋 Copier', 2000);
+  });
 }
 
 // ─── Lightbox ───────────────────────────────────────────────────────────────

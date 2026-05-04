@@ -63,6 +63,21 @@ CREATE TABLE IF NOT EXISTS rentals (
     created_at TEXT DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS listings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tool_id INTEGER NOT NULL REFERENCES tools(id) ON DELETE CASCADE,
+    platform_id INTEGER NOT NULL REFERENCES platforms(id) ON DELETE CASCADE,
+    is_active INTEGER DEFAULT 1,
+    title TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    price REAL,
+    url TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT DEFAULT (datetime('now', 'localtime')),
+    UNIQUE(tool_id, platform_id)
+);
+
 INSERT OR IGNORE INTO platforms (name) VALUES ('Direct');
 INSERT OR IGNORE INTO platforms (name) VALUES ('Leboncoin');
 """
